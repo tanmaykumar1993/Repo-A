@@ -1,0 +1,22 @@
+#Repository A workflow (Dispatch)
+
+on:
+  push:
+  repository_dispatch:
+ 
+jobs:
+  dispatch-response:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Event Details
+        run: |
+          echo "Event '${{ github.event.action || github.event_name }}' received from '${{ github.event.client_payload.repository || github.event.pusher.name }}'"
+      - name: Initiating dispatch event to remote repository on Push
+        if: github.event_name == 'push'
+        run: |
+          curl -X POST https://api.github.com/repos/tanmaykumar1993/Repo-B/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -u ${{ secrets.ACCESS_TOKEN }} --data '{"event_type": "dispatch", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
+      - name: Sending Ack on response from remote repository
+        if: github.event.action == 'response'
+        run: |
+          echo "Response received from '${{ github.event.client_payload.repository }}'"
+          curl -X POST https://api.github.com/repos/tanmaykumar1993/Repo-B/dispatches -H 'Accept: application/vnd.github.everest-preview+json' -u ${{ secrets.ACCESS_TOKEN }} --data '{"event_type": "ack", "client_payload": { "repository": "'"$GITHUB_REPOSITORY"'" }}'
